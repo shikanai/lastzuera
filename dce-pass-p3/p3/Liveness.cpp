@@ -29,7 +29,7 @@ void Liveness::computeIInOut(Function &F) {
 	for (Function::iterator b = F.begin(), e = F.end(); b != e; ++b) {
         BasicBlock::iterator i = --b->end();
         errs() << "BasicBlock (name=" << b->getName() << ") has "<< b->size() << " instructions.\n";	
-        errs() << "Function (name=" << i->getName() << ")\n" ;	
+        errs() << "Instruction (name=" << *i << ")\n" ;
       }
 	
 }
