@@ -23,11 +23,16 @@ void Liveness::addToMap(Function &F) {
 }
 
 bool Liveness::isLiveOut(Instruction *I, Value *V){
+<<<<<<< HEAD
 	errs() << "isLiveOut\n";
+=======
+	errs() << "bla1\n";
+>>>>>>> origin/master
     return false;
 }
 
 //bb -> basic block
+<<<<<<< HEAD
 //aqui eh onde vamos definir o Def e o Use, a partir de cada statement...
 void Liveness::computeBBDefUse(Function &F){
 	errs() << "DefUses\n";
@@ -64,26 +69,47 @@ void Liveness::computeBBDefUse(Function &F){
 
 void Liveness::computeBBInOut(Function &F){
 	errs() << "BBInOut\n";
+=======
+void Liveness::computeBBDefUse(Function &F){
+	errs() << "bla2\n";
+}
+
+void Liveness::computeBBInOut(Function &F){
+	errs() << "bla3\n";
+>>>>>>> origin/master
 }
 
 //i -> instruction
 void Liveness::computeIInOut(Function &F) {
+<<<<<<< HEAD
 	errs() << "IInOut\n";
 	/*for (Function::iterator b = F.begin(), e = F.end(); b != e; ++b) {
         BasicBlock::iterator i = --b->end();
         errs() << "BasicBlock (name=" << b->getName() << ") has "<< b->size() << " instructions.\n";	
         errs() << "Instruction (name=" << *i << ")\n" ;
       }*/
+=======
+	errs() << "bla4\n";
+	for (Function::iterator b = F.begin(), e = F.end(); b != e; ++b) {
+        BasicBlock::iterator i = --b->end();
+        errs() << "BasicBlock (name=" << b->getName() << ") has "<< b->size() << " instructions.\n";	
+        errs() << "Instruction (name=" << *i << ")\n" ;
+      }
+>>>>>>> origin/master
 	
 }
 
 bool Liveness::runOnFunction(Function &F) {
+<<<<<<< HEAD
 
 	//adiciona instrucoes ao map
 	addToMap(F);
 	
 	errs() << "runOnFunction\n";
 	//computa todos os Def e Uses de cada instrucao
+=======
+	errs() << "bla0\n";
+>>>>>>> origin/master
     computeBBDefUse(F);
 	
     computeBBInOut(F);
