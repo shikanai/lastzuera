@@ -29,6 +29,11 @@ bool Liveness::isLiveOut(Instruction *I, Value *V){
 
 //bb -> basic block
 //aqui eh onde vamos definir o Def e o Use, a partir de cada statement...
+//Baseado em exemplo fornecido
+//gen -> use
+//kill -> def
+//before -> in
+//after -> out
 void Liveness::computeBBDefUse(Function &F){
 	errs() << "DefUses\n";
     for (Function::iterator basicBlock = F.begin(), end = F.end(); basicBlock != end; ++basicBlock) {
@@ -48,9 +53,10 @@ void Liveness::computeBBDefUse(Function &F){
 			for (unsigned j = 0; j < n; j++) {
 				Value *v = instruction->getOperand(j);
 				if (isa<Instruction>(v)) {
-				  Instruction *op = cast<Instruction>(v);
-				  if (!instructionInfo.def.count(op))
-					instructionInfo.use.insert(op);
+					Instruction *op = cast<Instruction>(v);
+					if (!instructionInfo.def.count(op)){
+						instructionInfo.use.insert(op);
+					}
 				}
 			  }
 			  // For the KILL set, you can use the set of all instructions
@@ -63,22 +69,62 @@ void Liveness::computeBBDefUse(Function &F){
 
 }
 
+//Baseado no exemplo fornecido
+//verificar se esta ok o funcionamento
 void Liveness::computeBBInOut(Function &F){
 	errs() << "BBInOut\n";
+	SmallVector<BasicBlock*, 32> workList;
+	
+	//pegando o ultimo elemento 
+    workList.push_back(--F.end());
+
+	//iterando na workList
+    while (workList.empty()==0) {
+	
+		BasicBlock *basicBlock = workList.pop_back_val();
+		
+		//toda a informacao esta no LivenessInfo.
+		LivenessInfo b_info = bbLivenessMap.lookup(basicBlock);
+		bool shouldAddPred = !bbLivenessMap.count(basicBlock);
+		
+		//nao precisa desse b_genKill
+		//genKill b_genKill = bbGKMap.lookup(basicBlock);
+      
+		// Take the union of all successors
+		std::set<const Instruction*> a;
+		for (succ_iterator SI = succ_begin(basicBlock), E = succ_end(basicBlock); SI != E; ++SI) {
+			std::set<const Instruction*> s(bbLivenessMap.lookup(*SI).in);
+			a.insert(s.begin(), s.end());
+		}
+
+        if (a != b_info.out){
+          shouldAddPred = true;
+          b_info.out = a;
+          // in = out - def + use
+          b_info.in.clear();
+          std::set_difference(a.begin(), a.end(), b_info.def.begin(), b_info.def.end(),
+                              std::inserter(b_info.in, b_info.in.end()));
+          b_info.in.insert(b_info.use.begin(), b_info.use.end());
+        }
+        
+        if (shouldAddPred)
+          for (pred_iterator PI = pred_begin(basicBlock), E = pred_end(basicBlock); PI != E; ++PI)
+            workList.push_back(*PI);
+      }
+	
 }
 
 //i -> instruction
+
 void Liveness::computeIInOut(Function &F) {
 	errs() << "IInOut\n";
-	/*for (Function::iterator b = F.begin(), e = F.end(); b != e; ++b) {
-        BasicBlock::iterator i = --b->end();
-        errs() << "BasicBlock (name=" << b->getName() << ") has "<< b->size() << " instructions.\n";	
-        errs() << "Instruction (name=" << *i << ")\n" ;
-      }*/
+	
 	
 }
 
 bool Liveness::runOnFunction(Function &F) {
+
+	 bool changed = false;
 
 	//adiciona instrucoes ao map
 	addToMap(F);
@@ -87,7 +133,10 @@ bool Liveness::runOnFunction(Function &F) {
 	//computa todos os Def e Uses de cada instrucao
     computeBBDefUse(F);
 	
+	// For each basic block in the function, compute the block's in and out sets.
     computeBBInOut(F);
+	
+	
     computeIInOut(F);
     return false;
 }
