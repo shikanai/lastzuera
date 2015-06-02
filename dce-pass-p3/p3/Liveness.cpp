@@ -81,6 +81,7 @@ void Liveness::computeBBInOut(Function &F){
 	//iterando na workList
     while (workList.empty()==0) {
 	
+		//tira o ultimo elemento, e coloca em basicBlock
 		BasicBlock *basicBlock = workList.pop_back_val();
 		
 		//toda a informacao esta no LivenessInfo.
@@ -92,6 +93,9 @@ void Liveness::computeBBInOut(Function &F){
       
 		// Take the union of all successors
 		std::set<const Instruction*> a;
+		
+		//Itera por todos os sucessores do basic block em analise, procurando por eles no bbLivenessMap.
+		//Caso exista, inserimos a instrucao em a.
 		for (succ_iterator SI = succ_begin(basicBlock), E = succ_end(basicBlock); SI != E; ++SI) {
 			std::set<const Instruction*> s(bbLivenessMap.lookup(*SI).in);
 			a.insert(s.begin(), s.end());
@@ -102,23 +106,55 @@ void Liveness::computeBBInOut(Function &F){
           b_info.out = a;
           // in = out - def + use
           b_info.in.clear();
+		  
+		  //out - def
           std::set_difference(a.begin(), a.end(), b_info.def.begin(), b_info.def.end(),
                               std::inserter(b_info.in, b_info.in.end()));
+		  //+ use
           b_info.in.insert(b_info.use.begin(), b_info.use.end());
         }
         
-        if (shouldAddPred)
-          for (pred_iterator PI = pred_begin(basicBlock), E = pred_end(basicBlock); PI != E; ++PI)
-            workList.push_back(*PI);
+        if (shouldAddPred){
+			//iterando anteriores
+			for (pred_iterator PI = pred_begin(basicBlock), E = pred_end(basicBlock); PI != E; ++PI){
+				workList.push_back(*PI);
+			}
+		}
       }
 	
 }
 
 //i -> instruction
-
+//Baseado em exemplo fornecido
 void Liveness::computeIInOut(Function &F) {
 	errs() << "IInOut\n";
-	
+	for (Function::iterator basicBlock = F.begin(), e = F.end(); basicBlock != e; ++basicBlock) {
+        BasicBlock::iterator instruction = --basicBlock->end();
+        std::set<const Instruction*> instOut(bbLivenessMap.lookup(basicBlock).out);
+        std::set<const Instruction*> instIn(instOut);
+
+        while (true) {
+          // in = out - def + use
+          instIn.erase(instruction);
+
+          unsigned n = instruction->getNumOperands();
+          for (unsigned j = 0; j < n; j++) {
+            Value *v = instruction->getOperand(j);
+            if (isa<Instruction>(v))
+              instIn.insert(cast<Instruction>(v));
+          }
+
+          LivenessInfo liveInfo;
+          liveInfo.in = instIn;
+          liveInfo.out = instOut;
+          iLivenessMap.insert(std::make_pair(&*instruction, liveInfo));
+
+          instOut = instIn;
+          if (instruction == basicBlock->begin())
+            break;
+          --instruction;
+        }
+      }
 	
 }
 
