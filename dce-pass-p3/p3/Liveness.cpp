@@ -172,8 +172,17 @@ bool Liveness::runOnFunction(Function &F) {
 	// For each basic block in the function, compute the block's in and out sets.
     computeBBInOut(F);
 	
-	
     computeIInOut(F);
+	
+	for (inst_iterator i = inst_begin(F), E = inst_end(F); i != E; ++i) {
+        LivenessInfo livInfo = iLivenessMap.lookup(&*i);
+        errs() << "%" << instMap.lookup(&*i) << ": { ";
+        std::for_each(livInfo.in.begin(), livInfo.in.end(), print_elem);
+        errs() << "} { ";
+        std::for_each(livInfo.out.begin(), livInfo.out.end(), print_elem);
+        errs() << "}\n";
+      }
+	
     return false;
 }
 
