@@ -21,9 +21,10 @@ void Liveness::addToMap(Function &F) {
         instMap.insert(std::make_pair(&*i, id));
 	}
 }
-
+//Funcao que checa se o valor V existe no out de I.
 bool Liveness::isLiveOut(Instruction *I, Value *V){
-	errs() << "isLiveOut\n";
+	//errs() << "isLiveOut\n";
+	
     return false;
 }
 
@@ -35,27 +36,27 @@ bool Liveness::isLiveOut(Instruction *I, Value *V){
 //before -> in
 //after -> out
 void Liveness::computeBBDefUse(Function &F){
-	errs() << "DefUses\n";
+	//errs() << "DefUses\n";
     for (Function::iterator basicBlock = F.begin(), end = F.end(); basicBlock != end; ++basicBlock) {
 		LivenessInfo instructionInfo;
-		errs() << "Iterando dentro de Function...\n" ;
+		//errs() << "Iterando dentro de Function...\n" ;
 		//errs() << *basicBlock;
 		for (BasicBlock::iterator instruction = basicBlock->begin(), end2 = basicBlock->end(); instruction != end2; ++instruction) {
-			errs() << "Iterando dentro de BasicBlocks...\n" ;
-			errs() << *instruction << "\n";
-			
-			//estrutura que vai conter as infos de Def e Use da instrucao analisada no momento.
-			//Utilizaremos essa estrutura para armazenar as informacoes em iLivenessMap.
-
+			//errs() << "Iterando dentro de BasicBlocks...\n" ;
+			//errs() << *instruction << "\n";
 			
 			/*Extraido do exemplo*/
 			unsigned n = instruction->getNumOperands();
+			//itera todos os operandos da instrucao atual
 			for (unsigned j = 0; j < n; j++) {
 				Value *v = instruction->getOperand(j);
+				//verifica se o operando eh uma instrucao
 				if (isa<Instruction>(v)) {
 					Instruction *op = cast<Instruction>(v);
+					//se nao encontrar em def, coloca em use.
 					if (!instructionInfo.def.count(op)){
 						instructionInfo.use.insert(op);
+						//instructionInfo.def.insert(op);
 					}
 				}
 			  }
@@ -128,30 +129,57 @@ void Liveness::computeBBInOut(Function &F){
 //Baseado em exemplo fornecido
 void Liveness::computeIInOut(Function &F) {
 	errs() << "IInOut\n";
+	//iterando basic blocks
 	for (Function::iterator basicBlock = F.begin(), e = F.end(); basicBlock != e; ++basicBlock) {
+		//Comeca da ultima instrucao
         BasicBlock::iterator instruction = --basicBlock->end();
+        //armazena em instOut o set proveniente do bb - copia
         std::set<const Instruction*> instOut(bbLivenessMap.lookup(basicBlock).out);
+        //copia de instOut
         std::set<const Instruction*> instIn(instOut);
+        
+		//LivenessInfo b_info = bbLivenessMap.lookup(basicBlock);
 
         while (true) {
-          // in = out - def + use
-          instIn.erase(instruction);
+			/*// in = out - def + use
+			b_info.in.clear();
+		  
+			
+			//out - def
+			std::set_difference(b_info.out.begin(), b_info.out.end(), b_info.def.begin(), b_info.def.end(),
+                              std::inserter(b_info.in, b_info.in.end()));
+			//+ use
+			b_info.in.insert(b_info.use.begin(), b_info.use.end());
 
+			*/
+			// in = out - def + use
+			instIn.erase(instruction);
+			
           unsigned n = instruction->getNumOperands();
           for (unsigned j = 0; j < n; j++) {
-            Value *v = instruction->getOperand(j);
-            if (isa<Instruction>(v))
-              instIn.insert(cast<Instruction>(v));
+				Value *v = instruction->getOperand(j);
+				if (isa<Instruction>(v)){
+					instIn.insert(cast<Instruction>(v));
+				}
           }
 
           LivenessInfo liveInfo;
+          /*liveInfo.in = b_info.in;
+          liveInfo.out = b_info.out;
+          liveInfo.def = b_info.def;
+          liveInfo.use = b_info.use;*/
+          
           liveInfo.in = instIn;
           liveInfo.out = instOut;
+          
           iLivenessMap.insert(std::make_pair(&*instruction, liveInfo));
 
           instOut = instIn;
-          if (instruction == basicBlock->begin())
+          //b_info.out = b_info.in;
+          
+          if (instruction == basicBlock->begin()){
             break;
+          }
           --instruction;
         }
       }
