@@ -16,20 +16,36 @@ bool SSA::runOnFunction(Function &F){
 		errs() << "Basic block (name=" << i->getName() << ") has "
              << i->size() << " instructions.\n";
 		for (BasicBlock::reverse_iterator bi = i->rbegin(), be = i->rend(); bi != be; ++bi){
+			errs() << "inicio do bloco\n";
 			Instruction *v = cast<Instruction*>(bi);
 			errs() << *bi << "\n";
 			errs() << bi->use_empty()<< "\n";
 			if(bi->use_empty()){
+				errs() << "teste se eh usadas\n";
 				if(!((isa<TerminatorInst>(&*bi))  || (isa<LandingPadInst>(&*bi)))){ //|| (!isa<DbgInfoIntrinsic>(&*bi))
 					errs() << "TEMOS UM CASO AQUI HAHAHAHAHA\n";
-					/* PRECISO ARRUMAR AQUI */
-					/*BasicBlock::reverse_iterator backup = *bi;
-					++bi;
-					backup->eraseFromParent();*/
+					if(bi->mayHaveSideEffects()){
+						errs() << "ops, era store\n";
+					} else {
+						BasicBlock::reverse_iterator backup = bi;
+						++bi;
+						for (Function::iterator ii = F.begin(), ei = F.end(); ii != ei; ++ii){
+				  
+						// blk is a pointer to a BasicBlock instance
+							for (BasicBlock::iterator bii = ii->begin(), bei = ii->end(); bii != bei; ++bii){
+								if(bii == *backup){
+									BasicBlock::iterator Bk_interno = bii;
+									++Bk_interno;
+									Bk_interno->eraseFromParent();
+									errs() << "OK, FIZ A REMOCAO\n";
+								}
+							}
+						}
+						errs() << "SAI DO LOOP\n";
+					}
 				}
 			}
 		}
-
 	}
 	//return false;
 }
