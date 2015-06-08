@@ -15,16 +15,21 @@
 #include "llvm/Analysis/CFG.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/IR/ValueMap.h"
+//This allows the standard isa/dyncast/cast functionality to work with calls to intrinsic functions.
+//Incluimos esse .h para conseguir fazer chamadas de isa sem o compilador reclamar.
+#include <llvm/IR/IntrinsicInst.h>
 
 using namespace llvm;
 
 namespace llvm {
 
+//alterei o tipo dos elementos de LivenessInfo, para conseguir utilizar
+//com a estrutura implementada em bbInOut
 struct LivenessInfo {
-    std::set<const Value *> use;
-    std::set<const Value *> def;
-    std::set<const Value *> in;
-    std::set<const Value *> out;
+    std::set<const Instruction *> use;
+    std::set<const Instruction *> def;
+    std::set<const Instruction *> in;
+    std::set<const Instruction *> out;
 };
 
 class Liveness: public FunctionPass {
@@ -32,7 +37,6 @@ private:
 
     DenseMap<const Instruction*, LivenessInfo> iLivenessMap;
     DenseMap<const BasicBlock*, LivenessInfo> bbLivenessMap;
-
     DenseMap<const Instruction*, int> instMap;
 
 
@@ -46,7 +50,7 @@ public:
 
     void computeIInOut(Function &F);
 
-    bool isLiveOut(Instruction *I, Value *V);
+    bool isLiveOut(Instruction *I, Instruction *V);
     void addToMap(Function &F);
 
 	virtual void getAnalysisUsage(AnalysisUsage &AU) const{

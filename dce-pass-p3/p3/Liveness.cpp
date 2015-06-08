@@ -22,10 +22,17 @@ void Liveness::addToMap(Function &F) {
 	}
 }
 //Funcao que checa se o valor V existe no out de I.
-bool Liveness::isLiveOut(Instruction *I, Value *V){
+bool Liveness::isLiveOut(Instruction *I, Instruction *V){
 	//errs() << "isLiveOut\n";
+	LivenessInfo info = iLivenessMap.lookup(&*I);
+	if(info.out.count(V)>0){
+		return true;
+	}else{
+		return false;
+	}
+	//return (info.out.count(V));
 	
-    return false;
+    //return false;
 }
 
 //bb -> basic block

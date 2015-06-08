@@ -1,5 +1,7 @@
 #include "Liveness.h"
 
+
+
 //This allows the standard isa/dyncast/cast functionality to work with calls to intrinsic functions.
 
 //Incluimos esse .h para conseguir fazer chamadas de isa sem o compilador reclamar.
@@ -54,7 +56,13 @@ namespace {
 
 				for (BasicBlock::iterator instruction = basicBlock->begin(), end2 = basicBlock->end(); instruction != end2; ++aux) {
 
-			
+					
+
+					//reseta LivenessCheck;
+
+					LivenessCheck = false;
+
+					errs() << "instruction: " << *instruction << "\n"; 
 
 					//De acordo com os slides, uma instrucao eh trivialmente viva quando:
 
@@ -102,6 +110,12 @@ namespace {
 
 					
 
+					//-se for utilizada por outra instrucao viva
+
+					//ToDo: Verificar se eh utilizada por outra instrucao viva.
+
+					//isLiveOut...
+
 					if(L.isLiveOut(instruction,instruction)){
 
 						errs() << "isLiveOut\n";
@@ -109,16 +123,6 @@ namespace {
 						LivenessCheck = true;
 
 					}
-
-					
-
-					//-se for utilizada por outra instrucao viva
-
-					//ToDo: Verificar se eh utilizada por outra instrucao viva.
-
-					//isLiveOut...
-
-					
 
 					
 
@@ -140,9 +144,7 @@ namespace {
 
 						//itr_aux->eraseFromParent();
 
-						errs() << "instruction erased!\n";
-
-						LivenessCheck = false;
+						errs() << "instruction erasable!!!!\n";
 
 					}
 
@@ -150,15 +152,7 @@ namespace {
 
 			}
 
-			
-
 			//fim da iteracao
-
-			
-
-			errs() << "teste!\n";
-
-			errs() << "Fim!\n";
 
 		}
 
