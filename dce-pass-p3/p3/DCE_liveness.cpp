@@ -14,11 +14,11 @@ using namespace llvm;
 
 namespace {
 
-   struct DCE : public FunctionPass {
+   struct DCE_liveness : public FunctionPass {
 
 		static char ID;
 
-    	DCE() : FunctionPass(ID) {}
+    	DCE_liveness() : FunctionPass(ID) {}
 
 
 
@@ -70,6 +70,8 @@ namespace {
 
 					//-seu comportamento gerar efeitos colaterias
 
+					//Return true if the instruction may have side effects. 
+
 					if(instruction->mayHaveSideEffects()){
 
 						errs() << "mayHaveSideEffects\n";
@@ -78,7 +80,19 @@ namespace {
 
 					}	
 
-					//-se for um terminador
+					
+
+					//The isa<> operator works exactly like the Java “instanceof” operator. 
+
+					//It returns true or false depending on whether a reference or pointer points 
+
+					//to an instance of the specified class. This can be very useful for 
+
+					//constraint checking of various sorts;
+
+					
+
+					//-se for uma instrucao terminator
 
 					if(isa<TerminatorInst>(instruction)){
 
@@ -108,6 +122,26 @@ namespace {
 
 					}
 
+					//ao executar o teste, percebi que ele estava removendo
+
+					//algumas instrucoes a mais, referentes a alloca...
+
+					//portanto, tratamos essa parte de outra forma...
+
+					if(isa<AllocaInst>(instruction)){
+
+						errs() << "eh uma instrucao de alocacao!\nVerificando se eh utilizada em outras circunstancias...\n";
+
+						if(!L.isLiveOut(instruction,instruction)){
+
+							//todo: tratar direito isso!!!
+
+							LivenessCheck = true;
+
+						}
+
+					}
+
 					
 
 					//-se for utilizada por outra instrucao viva
@@ -123,6 +157,10 @@ namespace {
 						LivenessCheck = true;
 
 					}
+
+					
+
+					
 
 					
 
@@ -142,7 +180,7 @@ namespace {
 
 						//se a instrucao nao for trivialmente viva, removemos ela.
 
-						//itr_aux->eraseFromParent();
+						itr_aux->eraseFromParent();
 
 						errs() << "instruction erasable!!!!\n";
 
@@ -153,6 +191,10 @@ namespace {
 			}
 
 			//fim da iteracao
+
+			
+
+			return true;
 
 		}
 
@@ -170,11 +212,11 @@ namespace {
 
    };
 
-    char DCE::ID = 0;
+    char DCE_liveness::ID = 0;
 
 
 
-	RegisterPass<DCE> X("DCE", "dead code elimination", false, false);
+	RegisterPass<DCE_liveness> X("DCE_liveness", "dead code elimination", false, false);
 
 }
 

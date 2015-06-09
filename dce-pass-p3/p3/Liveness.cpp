@@ -28,8 +28,10 @@ bool Liveness::isLiveOut(Instruction *I, Instruction *V){
 	if(info.out.count(V)>0){
 		return true;
 	}else{
+		errs() << "nao encontrado V em I\n";
 		return false;
 	}
+	
 	//return (info.out.count(V));
 	
     //return false;
@@ -208,7 +210,7 @@ bool Liveness::runOnFunction(Function &F) {
     computeBBInOut(F);
 	
     computeIInOut(F);
-	
+	/*
 	for (inst_iterator i = inst_begin(F), E = inst_end(F); i != E; ++i) {
         LivenessInfo livInfo = iLivenessMap.lookup(&*i);
         errs() << "%" << instMap.lookup(&*i) << ": { ";
@@ -216,7 +218,7 @@ bool Liveness::runOnFunction(Function &F) {
         errs() << "} { ";
         std::for_each(livInfo.out.begin(), livInfo.out.end(), print_elem);
         errs() << "}\n";
-      }
+      }*/
 	
     return false;
 }
