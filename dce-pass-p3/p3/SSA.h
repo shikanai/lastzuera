@@ -15,6 +15,7 @@
 #include "llvm/Analysis/CFG.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/IR/ValueMap.h"
+#include <llvm/IR/IntrinsicInst.h>
 
 
 using namespace llvm; 
