@@ -30,7 +30,7 @@ bool Liveness::isLiveOut(Instruction *I, Instruction *V){
 	if(info.out.count(V)>0){
 		return true;
 	}else{
-		errs() << "nao encontrado V em I\n";
+		//errs() << "nao encontrado V em I\n";
 		return false;
 	}
 	
@@ -38,6 +38,7 @@ bool Liveness::isLiveOut(Instruction *I, Instruction *V){
 	
     //return false;
 }
+
 
 //bb -> basic block
 //aqui eh onde vamos definir o Def e o Use, a partir de cada statement...

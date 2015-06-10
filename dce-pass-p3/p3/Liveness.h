@@ -49,7 +49,6 @@ public:
     void computeBBInOut(Function &F);
 
     void computeIInOut(Function &F);
-
     bool isLiveOut(Instruction *I, Instruction *V);
     void addToMap(Function &F);
 

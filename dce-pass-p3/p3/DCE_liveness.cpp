@@ -32,163 +32,223 @@ namespace {
 
 			
 
+			//variavel que verifica se a instrucao eh trivialmente viva
+
 			bool LivenessCheck = false;
 
 			int aux = 0;
 
-			
+			bool otimizado = false;
 
-			//Agora que temos L preenchido, devemos iterar por todos os basic blocks
+			//a cada otimizacao temos que rodar novamente o algoritmo, para termos
 
-			//e por todas as instrucoes, verificando se a instrucao eh trivialmente
+			//certeza de que soh paramos quando ele estiver estabilizado.
 
-			//viva.
+			//para isso utilizamos a flag otimizado, que, enquanto houver otimizacoes
 
-			//iterando os basicblocks
+			//no codigo, ele fica true. Quando nao houver, ele fica false e sai do loop.
 
-			for (Function::iterator basicBlock = F.begin(), end = F.end(); basicBlock != end; ++basicBlock) {
+			do{
 
-				//iterando as instrucoes
+				
 
-				//troquei instruction por aux, apenas para nao quebrar. estou atualizando instruction dentro do for,
+				otimizado = false;
 
-				//para nao destruir a lista
+				//Agora que temos L preenchido, devemos iterar por todos os basic blocks
 
-				for (BasicBlock::iterator instruction = basicBlock->begin(), end2 = basicBlock->end(); instruction != end2; ++aux) {
+				//e por todas as instrucoes, verificando se a instrucao eh trivialmente
 
-					
+				//viva.
 
-					//reseta LivenessCheck;
+				//iterando os basicblocks
 
-					LivenessCheck = false;
+				for (Function::iterator basicBlock = F.begin(), end = F.end(); basicBlock != end; ++basicBlock) {
 
-					errs() << "instruction: " << *instruction << "\n"; 
+					//iterando as instrucoes
 
-					//De acordo com os slides, uma instrucao eh trivialmente viva quando:
+					//troquei instruction por aux, apenas para nao quebrar. estou atualizando instruction dentro do for,
 
-					
+					//para nao destruir a lista
 
-					//-seu comportamento gerar efeitos colaterias
+					for (BasicBlock::iterator instruction = basicBlock->begin(), end2 = basicBlock->end(); instruction != end2; ++aux) {
 
-					//Return true if the instruction may have side effects. 
+						
 
-					if(instruction->mayHaveSideEffects()){
+						//reseta LivenessCheck;
 
-						errs() << "mayHaveSideEffects\n";
+						LivenessCheck = false;
 
-						LivenessCheck = true;
+						//errs() << "instruction: " << *instruction << "\n"; 
 
-					}	
+						//De acordo com os slides, uma instrucao eh trivialmente viva quando:
 
-					
+						
 
-					//The isa<> operator works exactly like the Java “instanceof” operator. 
+						//-seu comportamento gerar efeitos colaterias
 
-					//It returns true or false depending on whether a reference or pointer points 
+						//Return true if the instruction may have side effects. 
 
-					//to an instance of the specified class. This can be very useful for 
+						if(instruction->mayHaveSideEffects()){
 
-					//constraint checking of various sorts;
+							errs() << "mayHaveSideEffects\n";
 
-					
+							LivenessCheck = true;
 
-					//-se for uma instrucao terminator
+						}	
 
-					if(isa<TerminatorInst>(instruction)){
+						
 
-						errs() << "TerminatorInst\n";
+						//The isa<> operator works exactly like the Java “instanceof” operator. 
 
-						LivenessCheck = true;
+						//It returns true or false depending on whether a reference or pointer points 
 
-					}
+						//to an instance of the specified class. This can be very useful for 
 
-					//-se for uma instrucao de debugging
+						//constraint checking of various sorts;
 
-					if(isa<DbgInfoIntrinsic>(instruction)){
+						
 
-						errs() << "DbgInfoIntrinsic\n";
+						//-se for uma instrucao terminator
 
-						LivenessCheck = true;
+						if(isa<TerminatorInst>(instruction)){
 
-					}
-
-					//-se for uma instrucao de excecao
-
-					if(isa<LandingPadInst>(instruction)){
-
-						errs() << "LandingPadInst\n";
-
-						LivenessCheck = true;
-
-					}
-
-					//ao executar o teste, percebi que ele estava removendo
-
-					//algumas instrucoes a mais, referentes a alloca...
-
-					//portanto, tratamos essa parte de outra forma...
-
-					if(isa<AllocaInst>(instruction)){
-
-						errs() << "eh uma instrucao de alocacao!\nVerificando se eh utilizada em outras circunstancias...\n";
-
-						if(!L.isLiveOut(instruction,instruction)){
-
-							//todo: tratar direito isso!!!
+							errs() << "TerminatorInst\n";
 
 							LivenessCheck = true;
 
 						}
 
-					}
+						//-se for uma instrucao de debugging
 
-					
+						if(isa<DbgInfoIntrinsic>(instruction)){
 
-					//-se for utilizada por outra instrucao viva
+							errs() << "DbgInfoIntrinsic\n";
 
-					//ToDo: Verificar se eh utilizada por outra instrucao viva.
+							LivenessCheck = true;
 
-					//isLiveOut...
+						}
 
-					if(L.isLiveOut(instruction,instruction)){
+						//-se for uma instrucao de excecao
 
-						errs() << "isLiveOut\n";
+						if(isa<LandingPadInst>(instruction)){
 
-						LivenessCheck = true;
+							errs() << "LandingPadInst\n";
 
-					}
+							LivenessCheck = true;
 
-					
+						}
 
-					
+						
 
-					
+						//isLiveOut...
 
-					//Preparando I para ser incrementado e, caso nao seja
+						if(L.isLiveOut(instruction,instruction)){
 
-					//trivialmente viva, ser removida.
+							errs() << "isLiveOut\n";
 
-					BasicBlock::iterator itr_aux = instruction;
+							LivenessCheck = true;
 
-					instruction++;
+						}
 
-					
+						
 
-					//verificando valor de LivenessCheck
+						//ao executar o teste, percebi que ele estava removendo
 
-					if(!LivenessCheck){
+						//algumas instrucoes a mais, referentes a alloca...
 
-						//se a instrucao nao for trivialmente viva, removemos ela.
+						//portanto, tratamos essa parte de outra forma...
 
-						itr_aux->eraseFromParent();
+						//provavelmente isso eh devido a algum erro na analise de liveness...
 
-						errs() << "instruction erasable!!!!\n";
+						if(isa<AllocaInst>(instruction)){
+
+							//errs() << "eh uma instrucao de alocacao!\nVerificando se eh utilizada em outras circunstancias...\n";
+
+							if(!L.isLiveOut(instruction,instruction)){
+
+								//todo: tratar direito isso!!!
+
+								//tirar esse if e tratar embaixo, na parte de outra instrucao viva
+
+								LivenessCheck = true;
+
+								//-se for utilizada por outra instrucao viva
+
+							}
+
+						}
+
+						/*
+
+						for (Function::iterator basicBlock2 = basicBlock; basicBlock2 != end; ++basicBlock2) {
+
+									for (BasicBlock::iterator instruction2 = instruction; instruction2 != end2; ++instruction2) {
+
+										//LivenessCheck = true;
+
+										if(L.isLiveOut(instruction2,instruction)){
+
+											errs() << "encontrei uso da instrucao em algum lugar. nao posso remover\n";
+
+											LivenessCheck = true;
+
+											break;
+
+										}
+
+										//errs() << &*instruction2 << "\n";
+
+									}
+
+									if(LivenessCheck){
+
+										break;
+
+									}
+
+									//errs() << "******" << &*end3 << "\n";
+
+								}
+
+						*/
+
+						
+
+						//verificando valor de LivenessCheck
+
+						if(!LivenessCheck){
+
+							//Preparando instrucao para ser incrementada e, caso nao seja
+
+							//trivialmente viva, ser removida.
+
+							errs() << "instruction***** \n"<< *instruction << "\n*****erasable!!!!\n";
+
+							BasicBlock::iterator itr_aux = instruction;
+
+							instruction++;
+
+							otimizado = true;
+
+							//se a instrucao nao for trivialmente viva, removemos ela.
+
+							itr_aux->eraseFromParent();
+
+							//LivenessCheck = false;
+
+						}else{
+
+							instruction++;
+
+						}
 
 					}
 
 				}
 
-			}
+				
+
+			}while(otimizado);
 
 			//fim da iteracao
 
